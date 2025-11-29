@@ -1,0 +1,207 @@
+/* Layout general */
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.app-header h2 {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+/* Paneles principales */
+.app-main {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 16px;
+}
+
+.card {
+    background: #111827;
+    border-radius: 8px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    margin-bottom: 12px;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+label {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+input[type="text"],
+select {
+    width: 100%;
+    padding: 6px 8px;
+    margin-top: 4px;
+    border-radius: 4px;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+
+button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+/* Reacciones */
+.reactions-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.reaction-btn {
+    background: #4b5563;
+    font-size: 13px;
+}
+
+.reaction-btn:hover {
+    background: #6b7280;
+}
+
+/* Lista de usuarios */
+.usuarios-lista {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+.usuarios-lista li {
+    padding: 4px 0;
+    border-bottom: 1px solid #1f2933;
+}
+
+/* Panel de logs */
+.log-panel {
+    height: 220px;
+    overflow-y: auto;
+    background: #020617;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+}
+
+.log-panel .success {
+    color: #4ade80;
+}
+
+.log-panel .error {
+    color: #f97373;
+}
+
+/* Player y overlay */
+.player-section {
+    margin-top: 16px;
+}
+
+.player-container {
+    position: relative;
+    background: #020617;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+#audio-player {
+    width: 100%;
+}
+
+/* Overlay para animaciones */
+.reactions-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Burbujas de reacciones */
+.reaction-bubble {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.9);
+    color: #e5e7eb;
+    font-size: 12px;
+    animation: rise-and-fade 1.8s ease-out forwards;
+}
+
+@keyframes rise-and-fade {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.9);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-40px) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-60px) scale(0.9);
+    }
+}
+
+/* Mensajes de usuario que entra/pausa */
+.user-event {
+    animation: highlight 0.8s ease-out;
+}
+
+@keyframes highlight {
+    0% { background-color: rgba(59,130,246,0.3); }
+    100% { background-color: transparent; }
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+    .app-main {
+        grid-template-columns: 1fr;
+    }
+}

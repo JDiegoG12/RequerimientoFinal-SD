@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Laboratorio Streaming + Reacciones</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- SockJS y STOMP para WebSocket (ponerlos junto a index.html) -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <header class="app-header">
+        <h1>Laboratorio de Sistemas Distribuidos</h1>
+        <h2>Streaming gRPC-Web + Reacciones en tiempo real</h2>
+    </header>
+
+    <main class="app-main">
+        <!-- Columna izquierda: datos usuario, canción y reacciones -->
+        <section class="left-panel">
+            <div class="card">
+                <h3>Usuario y canción</h3>
+                <label for="nickname">Nickname:</label>
+                <input type="text" id="nickname" placeholder="Ingresa tu nickname">
+
+                <label for="titulo-cancion">Título de la canción:</label>
+                <input type="text" id="titulo-cancion" placeholder="cancion1">
+
+                <label for="formato-cancion">Formato:</label>
+                <select id="formato-cancion">
+                    <option value="mp3">mp3</option>
+                    <option value="wav">wav</option>
+                </select>
+
+                <button id="btn-pedir-cancion">Pedir canción</button>
+            </div>
+
+            <div class="card">
+                <h3>Reacciones</h3>
+                <p>Envía reacciones mientras escuchas la canción:</p>
+                <div class="reactions-buttons">
+                    <button class="reaction-btn" data-reaccion="like">👍 Like</button>
+                    <button class="reaction-btn" data-reaccion="heart">❤️ Love</button>
+                    <button class="reaction-btn" data-reaccion="fire">🔥 Fire</button>
+                </div>
+                <small>Cada reacción vale $10. Máximo $50 por usuario.</small>
+            </div>
+        </section>
+
+        <!-- Columna derecha: usuarios y timeline -->
+        <section class="right-panel">
+            <div class="card">
+                <h3>Usuarios escuchando la canción</h3>
+                <ul id="usuarios-lista" class="usuarios-lista">
+                    <!-- Aquí se listarán nicknames activos por canción -->
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Timeline de eventos</h3>
+                <div id="log" class="log-panel">
+                    <!-- Aquí se escriben logs de audio y reacciones -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sección del reproductor con overlay de animaciones -->
+    <section class="player-section">
+        <div class="player-container">
+            <audio id="audio-player" controls style="display:none;"></audio>
+            <div id="reactions-overlay" class="reactions-overlay">
+                <!-- Aquí aparecerán burbujas de reacciones/nicknames -->
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- bundle.js trae cliente_receptor_fragmentos + funciones.js ya empacado -->
+<script src="bundle.js"></script>
+</body>
+</html>
