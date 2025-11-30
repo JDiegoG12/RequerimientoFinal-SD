@@ -35,8 +35,6 @@ Este proyecto es la implementación del requerimiento final para el curso de Lab
 
 El proyecto sigue una arquitectura de microservicios donde cada componente tiene una responsabilidad clara. La comunicación se realiza a través de diferentes protocolos según la necesidad.
 
-![Arquitectura del Sistema](<img width="760" height="434" alt="image" src="https://github.com/user-attachments/assets/8db1ecca-a640-479c-b248-72d75a874c8e" />
-)
 1.  **Cliente Web (HTML, CSS, JS):** La interfaz con la que interactúa el usuario.
 2.  **Proxy Envoy:** Actúa como intermediario, traduciendo las peticiones gRPC-Web (HTTP/1.1) del navegador a gRPC nativo (HTTP/2) que el servidor de streaming entiende.
 3.  **Servidor de Streaming (Go):** Provee los fragmentos de audio de la canción solicitada.
