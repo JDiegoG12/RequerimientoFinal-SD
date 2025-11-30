@@ -3,7 +3,10 @@ const path = require('path');
 
 module.exports = {
   // El punto de inicio de tu código
-  entry: './cliente_receptor_fragmentos.js', 
+ entry: [
+    './cliente_receptor_fragmentos.js',
+    './funciones.js'
+  ],
   mode: 'development',
   output: {
     // El archivo de salida final para el navegador

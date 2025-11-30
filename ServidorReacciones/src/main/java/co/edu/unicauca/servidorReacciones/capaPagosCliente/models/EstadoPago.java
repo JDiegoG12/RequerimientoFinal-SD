@@ -1,4 +1,4 @@
-package co.edu.unicauca.servidorReacciones.capaPagosCliente;
+package co.edu.unicauca.servidorReacciones.capaPagosCliente.models;
 
 /**
  * Estado del pago devuelto por el servidor de pagos.

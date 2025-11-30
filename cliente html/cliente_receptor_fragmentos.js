@@ -5,7 +5,7 @@ const { AudioServicePromiseClient } = require('./stubs_generados/servicios_grpc_
 
 
 
-const ENVOY_HOST = 'http://localhost:8080';
+const ENVOY_HOST = 'http://192.168.1.11:8080';
 
 const client = new AudioServicePromiseClient(ENVOY_HOST);
 

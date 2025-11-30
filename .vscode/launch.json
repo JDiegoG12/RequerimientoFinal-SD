@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ServidorPagosApplication<servidor-pagos>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "co.edu.unicauca.servidorPagos.ServidorPagosApplication",
+            "projectName": "servidor-pagos",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ServidorchatApplication<ServidorReacciones>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "co.edu.unicauca.servidorReacciones.ServidorchatApplication",
+            "projectName": "ServidorReacciones",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

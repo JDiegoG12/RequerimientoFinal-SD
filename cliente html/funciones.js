@@ -1,24 +1,6 @@
 // funcion.js - wrapper simple para llamar a la implementación del streaming
 
-/**
- * Solicita al backend de streaming que inicie el envío de la canción
- * usando la mejor implementación disponible expuesta en el objeto window.
- *
- * Orden de prioridad:
- *  - window.iniciar_streaming_cancion
- *  - window.iniciar_streaming_cancion_impl
- *  - window.iniciarStreamGRPCImpl
- *  - window.iniciarStreamGRPC
- *
- * Si ninguna implementación está disponible, se escribe un error en la consola
- * y en el panel de log de la página.
- *
- * @param {string} titulo  Título o identificador de la canción a reproducir.
- * @param {string} formato Formato de la canción (por ejemplo, "mp3" o "wav").
- * @returns {void}
- */
 function pedirCancion(titulo, formato) {
-    // Prioridad de implementaciones conocidas
     if (typeof window.iniciar_streaming_cancion === 'function') {
         return window.iniciar_streaming_cancion(titulo, formato);
     }
@@ -42,47 +24,24 @@ function pedirCancion(titulo, formato) {
     }
 }
 
-// Export para compatibilidad con cargas como módulo (si fuese necesario)
+// Export para compatibilidad con CommonJS (no afecta al navegador)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { pedirCancion };
 }
 
-// --------------------------------------------------------
-// --- Capa de WebSocket/Reacciones (STOMP + animaciones)
-// --------------------------------------------------------
+// ----------------------
+// Estado global cliente
+// ----------------------
 
-/**
- * Cliente STOMP sobre SockJS para comunicarse con el servidor de reacciones.
- * @type {Stomp.Client|null}
- */
 let stompClient = null;
-
-/**
- * Identificador de la canción actualmente solicitada/reproduciendo.
- * Se usa como idCancion para agrupar reacciones.
- * @type {string|null}
- */
 let currentSongId = null;
-
-/**
- * Nickname actual del usuario.
- * @type {string|null}
- */
 let currentNickname = null;
-
-/**
- * Suscripción actual al canal de reacciones de la canción.
- * @type {Stomp.Subscription|null}
- */
 let currentSubscription = null;
 
-/**
- * Escribe un mensaje en el panel de log (#log) con un estilo opcional.
- *
- * @param {string} message Mensaje a mostrar en el log.
- * @param {string} [level] Nivel o clase CSS opcional (por ejemplo, "success" o "error").
- * @returns {void}
- */
+// ----------------------
+// Helpers UI
+// ----------------------
+
 function writeLog(message, level) {
     const d = document.getElementById('log');
     if (!d) return;
@@ -94,13 +53,6 @@ function writeLog(message, level) {
     d.scrollTop = d.scrollHeight;
 }
 
-/**
- * Crea una burbuja de animación en el overlay de reacciones, mostrando
- * un texto corto (por ejemplo, "Juan envió 👍").
- *
- * @param {string} text Texto a mostrar en la burbuja de reacción.
- * @returns {void}
- */
 function showReactionBubble(text) {
     const overlay = document.getElementById('reactions-overlay');
     if (!overlay) return;
@@ -109,33 +61,23 @@ function showReactionBubble(text) {
     bubble.className = 'reaction-bubble';
     bubble.textContent = text;
 
-    // Posición horizontal aleatoria dentro del overlay
-    const randomLeft = 20 + Math.random() * 60; // entre 20% y 80%
+    const randomLeft = 20 + Math.random() * 60;
     bubble.style.left = randomLeft + '%';
 
     overlay.appendChild(bubble);
 
-    // Eliminar la burbuja cuando termine la animación
     setTimeout(() => {
-        overlay.removeChild(bubble);
-    }, 2000);
+        if (overlay.contains(bubble)) {
+            overlay.removeChild(bubble);
+        }
+    }, 3000);
 }
 
-/**
- * Actualiza la lista de usuarios activos (#usuarios-lista) de forma simple:
- * cuando llega un evento PLAY agrega (si no está) y cuando llega un
- * evento PAUSE lo quita.
- *
- * @param {string} nickname Nickname del usuario.
- * @param {string} tipo     Tipo de evento ("PLAY" o "PAUSE" o "REACCION").
- * @returns {void}
- */
 function updateUserListFromEvent(nickname, tipo) {
     const ul = document.getElementById('usuarios-lista');
     if (!ul || !nickname) return;
 
     if (tipo === 'PLAY') {
-        // Agregar si no existe
         const exists = Array.from(ul.children).some(li => li.dataset.user === nickname);
         if (!exists) {
             const li = document.createElement('li');
@@ -145,7 +87,6 @@ function updateUserListFromEvent(nickname, tipo) {
             ul.appendChild(li);
         }
     } else if (tipo === 'PAUSE') {
-        // Eliminar si existe
         Array.from(ul.children).forEach(li => {
             if (li.dataset.user === nickname) {
                 ul.removeChild(li);
@@ -155,39 +96,92 @@ function updateUserListFromEvent(nickname, tipo) {
 }
 
 /**
- * Conecta con el servidor de reacciones usando SockJS/STOMP y se suscribe
- * al canal de la canción actual: /broker/canciones/{currentSongId}.
- *
- * Debe llamarse después de establecer currentNickname y currentSongId.
- *
- * @returns {void}
+ * Muestra una notificación "toast" en la esquina de la pantalla.
+ * Se utiliza para mostrar mensajes privados del servidor (ej. errores de pago).
  */
+function showPrivateNotification({ tipo, titulo, mensaje }) {
+    const container = document.querySelector('.app-container');
+    if (!container) return;
+
+    const notification = document.createElement('div');
+    notification.className = 'private-notification';
+
+    // Añade una clase de estilo basada en el tipo de notificación
+    if (tipo === 'ERROR_PAGO') {
+        notification.classList.add('error');
+    } else if (tipo === 'LIMITE_ALCANZADO') {
+        notification.classList.add('warning');
+    }
+
+    const titleElem = document.createElement('h4');
+    titleElem.textContent = titulo;
+    notification.appendChild(titleElem);
+
+    const messageElem = document.createElement('p');
+    messageElem.textContent = mensaje;
+    notification.appendChild(messageElem);
+
+    container.appendChild(notification);
+
+    // La notificación se elimina automáticamente después de 5 segundos
+    setTimeout(() => {
+        if (container.contains(notification)) {
+            container.removeChild(notification);
+        }
+    }, 5000);
+}
+
+// ----------------------
+// WebSocket / STOMP
+// ----------------------
 function connectReacciones() {
     if (!currentNickname || !currentSongId) {
         writeLog('No se puede conectar a reacciones: falta nickname o id de canción.', 'error');
         return;
     }
 
-    // Si ya hay un cliente conectado, cerrarlo antes de reconectar
+    // Desconectar si ya existe una conexión para evitar duplicados
     if (stompClient && stompClient.connected) {
         if (currentSubscription) {
             currentSubscription.unsubscribe();
             currentSubscription = null;
         }
+        // La desconexión es asíncrona, así que conectamos en el callback
         stompClient.disconnect(() => {
-            writeLog('Desconectado de servidor de reacciones (reconexión).', 'error');
+            writeLog('Conexión anterior de reacciones cerrada.');
+            procederConNuevaConexion();
         });
+    } else {
+        procederConNuevaConexion();
     }
+}
 
-    const socket = new SockJS('http://localhost:5000/ws');
+function procederConNuevaConexion() {
+    // Esto asegura que la información del usuario esté disponible durante el handshake inicial.
+    const url = `http://localhost:5000/ws?nickname=${encodeURIComponent(currentNickname)}`;
+    console.log('Conectando a SockJS con URL:', url);
+
+    const socket = new SockJS(url);
     stompClient = Stomp.over(socket);
-    stompClient.debug = null; // silencia logs de debug si molestan
+    // ================================================================
 
-    stompClient.connect({}, () => {
+    stompClient.debug = (str) => {
+        console.log('STOMP DEBUG:', str);
+    };
+
+    // La cabecera 'login' ya no es estrictamente necesaria para la identificación,
+    // pero la dejamos por si es útil para otros interceptores.
+    const headers = {
+        login: currentNickname
+    };
+
+    stompClient.connect(headers, () => {
+        console.log('CONEXIÓN STOMP EXITOSA. Suscribiendo a canales...');
         writeLog('Conectado al servidor de reacciones.', 'success');
 
-        const destino = `/broker/canciones/${currentSongId}`;
-        currentSubscription = stompClient.subscribe(destino, (message) => {
+        // (El resto de la función no cambia)
+        const publicDestino = `/broker/canciones/${currentSongId}`;
+        currentSubscription = stompClient.subscribe(publicDestino, (message) => {
             if (!message.body) return;
             try {
                 const data = JSON.parse(message.body);
@@ -196,24 +190,27 @@ function connectReacciones() {
                 console.error('Error parseando mensaje de reacciones:', e);
             }
         });
+
+        stompClient.subscribe('/user/queue/notificaciones', (message) => {
+            if (!message.body) return;
+            try {
+                const notificacion = JSON.parse(message.body);
+                console.log('NOTIFICACIÓN PRIVADA RECIBIDA:', notificacion);
+                showPrivateNotification(notificacion);
+            } catch (e) {
+                console.error('Error parseando notificación privada:', e);
+            }
+        });
+
     }, (error) => {
-        console.error('Error en conexión STOMP:', error);
+        console.error('Error detallado en conexión STOMP:', error);
         writeLog('Error al conectar al servidor de reacciones.', 'error');
     });
 }
 
-/**
- * Maneja los mensajes entrantes desde el servidor de reacciones
- * para la canción actual. data debe seguir la estructura de MensajeCancion.
- *
- * @param {{nickname:string, idCancion:string, tipo:string, contenido?:string}} data
- * @returns {void}
- */
 function manejarMensajeReaccion(data) {
     const { nickname, idCancion, tipo, contenido } = data;
-
     if (!idCancion || idCancion !== currentSongId) {
-        // Mensaje de otra canción; se ignora en este cliente.
         return;
     }
 
@@ -231,14 +228,6 @@ function manejarMensajeReaccion(data) {
     }
 }
 
-/**
- * Envía un mensaje genérico al servidor de reacciones usando STOMP,
- * si la conexión está activa.
- *
- * @param {string} destino   Destino STOMP (por ejemplo, "/app/reproducir").
- * @param {Object} payload   Cuerpo del mensaje a enviar.
- * @returns {void}
- */
 function enviarMensajeStomp(destino, payload) {
     if (!stompClient || !stompClient.connected) {
         writeLog('No hay conexión activa con el servidor de reacciones.', 'error');
@@ -247,144 +236,99 @@ function enviarMensajeStomp(destino, payload) {
     stompClient.send(destino, {}, JSON.stringify(payload));
 }
 
-/**
- * Envía al servidor de reacciones un evento de inicio/reanudación de reproducción
- * para la canción actual.
- *
- * @returns {void}
- */
 function enviarPlay() {
     if (!currentNickname || !currentSongId) return;
-
-    const mensaje = {
+    enviarMensajeStomp('/app/reproducir', {
         nickname: currentNickname,
         idCancion: currentSongId,
         tipo: 'PLAY',
         contenido: null
-    };
-    enviarMensajeStomp('/app/reproducir', mensaje);
+    });
 }
 
-/**
- * Envía al servidor de reacciones un evento de pausa de reproducción
- * para la canción actual.
- *
- * @returns {void}
- */
 function enviarPause() {
     if (!currentNickname || !currentSongId) return;
-
-    const mensaje = {
+    enviarMensajeStomp('/app/detener', {
         nickname: currentNickname,
         idCancion: currentSongId,
         tipo: 'PAUSE',
         contenido: null
-    };
-    enviarMensajeStomp('/app/detener', mensaje);
+    });
 }
 
-/**
- * Envía al servidor de reacciones un evento de REACCION asociado
- * a la canción y usuario actuales.
- *
- * @param {string} tipoReaccion Tipo de reacción (por ejemplo "like", "heart", "fire").
- * @returns {void}
- */
 function enviarReaccion(tipoReaccion) {
     if (!currentNickname || !currentSongId) {
         writeLog('No se puede enviar reacción: falta nickname o canción.', 'error');
         return;
     }
-
-    const mensaje = {
+    enviarMensajeStomp('/app/reaccionar', {
         nickname: currentNickname,
         idCancion: currentSongId,
         tipo: 'REACCION',
         contenido: tipoReaccion
-    };
-    enviarMensajeStomp('/app/reaccionar', mensaje);
+    });
 }
 
-// --------------------------------------------------------
-// --- Helpers y listeners para logging de audio (play / pause)
-//     integrados con la capa de reacciones
-// --------------------------------------------------------
-(function() {
-    /**
-     * Adjunta listeners de eventos al elemento de audio principal
-     * (audio#audio-player) para:
-     *  - Registrar en el log cuando se hace play/pause.
-     *  - Notificar al servidor de reacciones (enviarPlay/enviarPause).
-     *
-     * Si el elemento de audio no se encuentra, se registra un error en el log.
-     *
-     * @returns {void}
-     */
-    function attachAudioListeners() {
-        const audio = document.getElementById('audio-player');
-        if (!audio) {
-            writeLog('No se encontró el elemento audio#audio-player.', 'error');
-            return;
-        }
+// ----------------------
+// Listeners de audio y UI
+// ----------------------
 
-        audio.addEventListener('play', function() {
-            writeLog('Reproducción iniciada (play).', 'success');
-            enviarPlay();
-        });
+function attachAudioListeners() {
+    const audio = document.getElementById('audio-player');
+    if (!audio) {
+        writeLog('No se encontró el elemento audio#audio-player.', 'error');
+        return;
+    }
 
-        audio.addEventListener('pause', function() {
-            writeLog('Reproducción pausada (pause).', 'error');
-            enviarPause();
+    audio.addEventListener('play', function () {
+        writeLog('Reproducción iniciada (play).', 'success');
+        enviarPlay();
+    });
+
+    audio.addEventListener('pause', function () {
+        writeLog('Reproducción pausada (pause).', 'error');
+        enviarPause();
+    });
+}
+
+function attachUiListeners() {
+    const btnPedir = document.getElementById('btn-pedir-cancion');
+    if (btnPedir) {
+        btnPedir.addEventListener('click', () => {
+            const nicknameInput = document.getElementById('nickname');
+            const tituloInput = document.getElementById('titulo-cancion');
+            const formatoSelect = document.getElementById('formato-cancion');
+
+            const nickname = nicknameInput ? nicknameInput.value.trim() : '';
+            const titulo = tituloInput ? tituloInput.value.trim() : '';
+            const formato = formatoSelect ? formatoSelect.value : 'mp3';
+
+            if (!nickname || !titulo) {
+                writeLog('Debes ingresar un nickname y un título de canción.', 'error');
+                return;
+            }
+
+            currentNickname = nickname;
+            currentSongId = titulo;
+
+            writeLog(`Solicitando canción "${titulo}" en formato ${formato} para ${nickname}.`, 'success');
+
+            pedirCancion(titulo, formato);
+            connectReacciones();
         });
     }
 
-    /**
-     * Adjunta listeners a los elementos de la interfaz:
-     *  - Botón "Pedir canción" para iniciar streaming y conectar a reacciones.
-     *  - Botones de reacción para enviar eventos REACCION.
-     *
-     * @returns {void}
-     */
-    function attachUiListeners() {
-        const btnPedir = document.getElementById('btn-pedir-cancion');
-        if (btnPedir) {
-            btnPedir.addEventListener('click', () => {
-                const nicknameInput = document.getElementById('nickname');
-                const tituloInput = document.getElementById('titulo-cancion');
-                const formatoSelect = document.getElementById('formato-cancion');
-
-                const nickname = nicknameInput ? nicknameInput.value.trim() : '';
-                const titulo = tituloInput ? tituloInput.value.trim() : '';
-                const formato = formatoSelect ? formatoSelect.value : 'mp3';
-
-                if (!nickname || !titulo) {
-                    writeLog('Debes ingresar un nickname y un título de canción.', 'error');
-                    return;
-                }
-
-                currentNickname = nickname;
-                currentSongId = titulo;
-
-                writeLog(`Solicitando canción "${titulo}" en formato ${formato} para ${nickname}.`, 'success');
-
-                // Inicia streaming gRPC-Web
-                pedirCancion(titulo, formato);
-
-                // Conecta WebSocket/STOMP para reacciones de esta canción
-                connectReacciones();
-            });
-        }
-
-        const reactionButtons = document.querySelectorAll('.reaction-btn');
-        reactionButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tipoReaccion = btn.dataset.reaccion;
-                enviarReaccion(tipoReaccion);
-            });
+    const reactionButtons = document.querySelectorAll('.reaction-btn');
+    reactionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tipoReaccion = btn.dataset.reaccion;
+            enviarReaccion(tipoReaccion);
         });
-    }
+    });
+}
 
-    // Intentar auto-adjuntar cuando el DOM esté listo
+// Auto‑registro al cargar DOM
+(function () {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             attachAudioListeners();
@@ -394,10 +338,11 @@ function enviarReaccion(tipoReaccion) {
         attachAudioListeners();
         attachUiListeners();
     }
-
-    // Exponer funciones para uso manual o tests
-    if (typeof window !== 'undefined') {
-        window.__writeAudioLog = writeLog;
-        window.__attachAudioListeners = attachAudioListeners;
-    }
 })();
+
+// ----------------------
+// Exportar a window
+// ----------------------
+if (typeof window !== 'undefined') {
+    window.pedirCancion = pedirCancion;
+}

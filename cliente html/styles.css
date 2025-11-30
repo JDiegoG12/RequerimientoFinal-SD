@@ -1,154 +1,245 @@
-/* Layout general */
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: #0f172a;
-    color: #e5e7eb;
+/*-------------------------
+  Estilos Generales
+-------------------------*/
+:root {
+    --bg-dark: #121212;
+    --primary: #bb86fc;
+    --primary-variant: #3700b3;
+    --secondary: #03dac6;
+    --surface: #1e1e1e;
+    --on-surface: #e0e0e0;
+    --on-primary: #000;
+    --error: #cf6679;
+    --radius: 12px;
+    --shadow: 0 4px 10px rgba(0,0,0,0.25), 0 3px 3px rgba(0,0,0,0.22);
 }
 
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg-dark);
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/*-------------------------
+  Contenedor Principal
+-------------------------*/
 .app-container {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 1.5rem;
 }
 
 .app-header {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 1.5rem;
 }
 
 .app-header h1 {
     margin: 0;
-    font-size: 24px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
 }
 
 .app-header h2 {
-    margin: 4px 0 0;
-    font-size: 14px;
-    color: #9ca3af;
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--primary);
 }
 
-/* Paneles principales */
+/*-------------------------
+  Paneles Principales
+-------------------------*/
 .app-main {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 16px;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
 }
 
 .card {
-    background: #111827;
-    border-radius: 8px;
-    padding: 12px 16px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    margin-bottom: 12px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card h3 {
     margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 16px;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    border-bottom: 1px solid var(--primary);
+    padding-bottom: 0.5rem;
 }
 
 label {
     display: block;
-    margin-top: 8px;
-    font-size: 13px;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 400;
 }
 
 input[type="text"],
 select {
+    box-sizing: border-box; /* SOLUCIÓN: Evita que los inputs se desborden */
     width: 100%;
-    padding: 6px 8px;
-    margin-top: 4px;
-    border-radius: 4px;
-    border: 1px solid #374151;
-    background: #020617;
-    color: #e5e7eb;
+    padding: 0.6rem 0.8rem;
+    margin-top: 0.4rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #2c2c2c;
+    color: var(--on-surface);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
 }
 
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.25);
+}
+
+/* NUEVO: Estilo para inputs obligatorios y vacíos */
+input:required:invalid {
+    border-color: var(--error);
+}
+input:required:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(207, 102, 121, 0.25);
+}
+
+
 button {
-    margin-top: 10px;
-    padding: 8px 12px;
-    border-radius: 4px;
+    margin-top: 1rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
-    background: #2563eb;
-    color: white;
+    background: var(--primary);
+    color: var(--on-primary);
     font-weight: 600;
-    font-size: 13px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 button:hover {
-    background: #1d4ed8;
+    background: var(--primary-variant);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-/* Reacciones */
+/*-------------------------
+  Reacciones
+-------------------------*/
 .reactions-buttons {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
 }
 
 .reaction-btn {
-    background: #4b5563;
-    font-size: 13px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--on-surface);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .reaction-btn:hover {
-    background: #6b7280;
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
 }
 
-/* Lista de usuarios */
+.reaction-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.reaction-btn:hover svg {
+    transform: scale(1.2);
+}
+
+small {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #9e9e9e;
+}
+
+/*-------------------------
+  Lista de Usuarios
+-------------------------*/
 .usuarios-lista {
     list-style: none;
     padding-left: 0;
     margin: 0;
-    max-height: 180px;
+    max-height: 140px; /* Tamaño reducido */
     overflow-y: auto;
-    font-size: 13px;
 }
 
 .usuarios-lista li {
-    padding: 4px 0;
-    border-bottom: 1px solid #1f2933;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85rem;
+    transition: background-color 0.3s ease;
 }
 
-/* Panel de logs */
+.usuarios-lista li:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/*-------------------------
+  Panel de Logs
+-------------------------*/
 .log-panel {
-    height: 220px;
+    height: 160px; /* Tamaño reducido */
     overflow-y: auto;
-    background: #020617;
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 12px;
+    background: #0d0d0d;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    font-family: 'Courier New', Courier, monospace;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .log-panel .success {
-    color: #4ade80;
+    color: var(--secondary);
 }
 
 .log-panel .error {
-    color: #f97373;
+    color: var(--error);
 }
 
-/* Player y overlay */
+/*-------------------------
+  Player y Overlay
+-------------------------*/
 .player-section {
-    margin-top: 16px;
+    margin-bottom: 1.5rem; /* Separación del contenido principal */
 }
 
 .player-container {
     position: relative;
-    background: #020617;
-    border-radius: 8px;
-    padding: 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #audio-player {
     width: 100%;
 }
 
-/* Overlay para animaciones */
 .reactions-overlay {
     position: absolute;
     inset: 0;
@@ -156,50 +247,109 @@ button:hover {
     overflow: hidden;
 }
 
-/* Burbujas de reacciones */
 .reaction-bubble {
     position: absolute;
-    bottom: 10px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.9);
-    color: #e5e7eb;
-    font-size: 12px;
-    animation: rise-and-fade 1.8s ease-out forwards;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    background: rgba(187, 134, 252, 0.9);
+    color: var(--on-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    animation: rise-and-fade 2.5s cubic-bezier(0.17, 0.84, 0.44, 1) forwards;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 @keyframes rise-and-fade {
-    0% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(10px) scale(0.9);
-    }
-    20% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0) scale(1);
-    }
-    80% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-40px) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-60px) scale(0.9);
-    }
+    0% { opacity: 0; transform: translate(-50%, 20px) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -60px) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -80px) scale(0.9); }
 }
 
-/* Mensajes de usuario que entra/pausa */
+/*-------------------------
+  Eventos de Usuario
+-------------------------*/
 .user-event {
-    animation: highlight 0.8s ease-out;
+    animation: highlight 1s ease-out;
 }
 
 @keyframes highlight {
-    0% { background-color: rgba(59,130,246,0.3); }
+    0% { background-color: rgba(187, 134, 252, 0.3); }
     100% { background-color: transparent; }
 }
 
-/* Responsivo */
+/*-------------------------
+  Pie de Página
+-------------------------*/
+.app-footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-footer p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #9e9e9e;
+}
+/*-------------------------
+  Notificaciones Privadas
+-------------------------*/
+.private-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    background-color: var(--surface);
+    color: var(--on-surface);
+    border-left: 5px solid var(--primary);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    animation: slide-in 0.5s ease-out forwards;
+    opacity: 0;
+    pointer-events: all;
+}
+
+.private-notification.error {
+    border-left-color: var(--error); /* #cf6679 */
+}
+
+.private-notification.warning {
+    border-left-color: #f59e0b; /* Un color amarillo/naranja de advertencia */
+}
+
+.private-notification h4 {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: white;
+}
+
+.private-notification p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+/*-------------------------
+  Responsivo
+-------------------------*/
 @media (max-width: 900px) {
     .app-main {
         grid-template-columns: 1fr;
